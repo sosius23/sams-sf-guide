@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Sam's SF</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=DM+Mono:wght@300;400;500&family=Newsreader:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* SF Flag colors: #092782 navy, #E20010 red, #FECA00 yellow, #6E291E brown, #FFFFFF white */
+    --cream: #FDF8F0;         /* warm off-white base */
+    --warm-white: #FFFFFF;    /* pure white for cards */
+    --ink: #092782;           /* SF flag navy — primary dark */
+    --rust: #E20010;          /* SF flag red — CTAs, highlights */
+    --gold: #FECA00;          /* SF flag yellow — accents */
+    --brown: #6E291E;         /* SF flag brown — warm mid-tone */
+    --sage: #2B4A8A;          /* navy tint — secondary elements */
+    --fog: #8A9BB5;           /* muted navy-grey */
+    --dusk: #1A3570;          /* deep navy for itinerary header */
+    --paper: #EEF2FA;         /* very light blue-tinted paper */
+    --card-bg: #F5F8FF;       /* near-white with blue tint */
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { background:var(--cream); color:var(--ink); font-family:'Newsreader',Georgia,serif; min-height:100vh; overflow-x:hidden; }
+
+  /* HEADER */
+  .site-header { background:var(--ink); color:var(--cream); padding:28px 20px 24px; text-align:center; position:relative; overflow:hidden; }
+  .site-header::before { content:''; position:absolute; inset:0; background:repeating-linear-gradient(-45deg,transparent,transparent 12px,rgba(255,255,255,.015) 12px,rgba(255,255,255,.015) 24px); }
+  .header-eyebrow { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); margin-bottom:8px; }
+  .header-title { font-family:'Playfair Display',serif; font-size:42px; font-weight:700; line-height:1; letter-spacing:-.02em; }
+  .header-title em { font-style:italic; color:var(--gold); }
+  .header-sub { font-family:'Newsreader',serif; font-style:italic; font-size:15px; color:rgba(245,240,232,.65); margin-top:8px; }
+
+  /* SCREENS */
+  .screen { display:none; min-height:100vh; }
+  .screen.active { display:block; animation:fadeUp .35s ease forwards; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  .screen-inner { max-width:480px; margin:0 auto; padding:0 20px 80px; }
+
+  /* INTRO */
+  .intro-note { background:var(--ink); color:var(--cream); padding:28px 24px; margin:28px 0 20px; position:relative; overflow:hidden; }
+  .intro-note::after { content:'"'; font-family:'Playfair Display',serif; font-size:120px; color:var(--gold); opacity:.15; position:absolute; top:-20px; right:16px; line-height:1; }
+  .intro-note p { font-size:16px; line-height:1.65; font-style:italic; }
+  .intro-note .sig { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:.1em; color:var(--gold); margin-top:16px; font-style:normal; }
+  .intro-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:28px; }
+  .stat-block { background:var(--paper); padding:16px 10px; text-align:center; border:1px solid rgba(28,26,23,.08); }
+  .stat-num { font-family:'Playfair Display',serif; font-size:28px; font-weight:700; color:var(--rust); display:block; }
+  .stat-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.15em; text-transform:uppercase; color:var(--fog); display:block; margin-top:2px; }
+
+  /* BUTTONS */
+  .btn-primary { display:block; width:100%; background:var(--rust); color:var(--cream); border:none; padding:18px 24px; font-family:'DM Mono',monospace; font-size:12px; letter-spacing:.15em; text-transform:uppercase; cursor:pointer; transition:background .2s,transform .1s; text-align:center; }
+  .btn-primary:active { transform:scale(.98); background:#9a3915; }
+  .btn-primary:disabled { opacity:.4; cursor:not-allowed; transform:none; background:var(--rust); }
+  .btn-secondary { display:block; width:100%; background:transparent; color:var(--ink); border:1.5px solid var(--ink); padding:14px 24px; font-family:'DM Mono',monospace; font-size:11px; letter-spacing:.15em; text-transform:uppercase; cursor:pointer; transition:all .2s; text-align:center; margin-top:10px; }
+  .btn-secondary:active { background:var(--ink); color:var(--cream); }
+
+  /* QUESTION UI */
+  .q-step { display:flex; align-items:center; gap:10px; padding:24px 0 4px; }
+  .q-num { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:.1em; color:var(--fog); white-space:nowrap; }
+  .q-progress-bar { flex:1; height:2px; background:var(--paper); }
+  .q-progress-fill { height:100%; background:var(--rust); transition:width .4s ease; }
+  .q-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--gold); margin-bottom:10px; padding-top:20px; }
+  .q-title { font-family:'Playfair Display',serif; font-size:26px; font-weight:700; line-height:1.2; margin-bottom:6px; }
+  .q-subtitle { font-size:14px; color:var(--fog); font-style:italic; margin-bottom:24px; }
+
+  /* CHOICE CARDS */
+  .choice-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:28px; }
+  .choice-grid.single-col { grid-template-columns:1fr; }
+  .choice-card { background:var(--card-bg); border:2px solid transparent; padding:18px 14px; cursor:pointer; transition:all .18s; position:relative; overflow:hidden; }
+  .choice-card:active { transform:scale(.97); }
+  .choice-card.selected { border-color:var(--rust); background:var(--warm-white); }
+  .choice-card.selected::after { content:'✓'; position:absolute; top:8px; right:10px; font-size:12px; color:var(--rust); font-family:'DM Mono',monospace; }
+  .card-emoji { font-size:28px; display:block; margin-bottom:8px; }
+  .card-title { font-family:'Playfair Display',serif; font-size:15px; font-weight:700; display:block; margin-bottom:4px; }
+  .card-desc { font-family:'DM Mono',monospace; font-size:10px; color:var(--fog); letter-spacing:.05em; line-height:1.5; }
+
+  /* ACCOMMODATION CARDS */
+  .accom-card { background:var(--card-bg); border:2px solid transparent; cursor:pointer; transition:all .18s; position:relative; overflow:hidden; margin-bottom:12px; }
+  .accom-card:active { transform:scale(.98); }
+  .accom-card.selected { border-color:var(--rust); }
+  .accom-card.selected::after { content:'✓'; position:absolute; top:10px; right:12px; font-size:13px; color:var(--rust); font-family:'DM Mono',monospace; background:var(--warm-white); width:22px; height:22px; display:flex; align-items:center; justify-content:center; border-radius:50%; }
+.accom-body { padding:14px; }
+  .accom-tag { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--sage); margin-bottom:4px; }
+  .accom-title { font-family:'Playfair Display',serif; font-size:16px; font-weight:700; margin-bottom:4px; }
+  .accom-desc { font-family:'DM Mono',monospace; font-size:10px; color:var(--fog); line-height:1.5; }
+  .accom-note { font-size:12px; font-style:italic; color:var(--dusk); margin-top:6px; border-left:2px solid var(--gold); padding-left:8px; }
+
+  /* DAYS SLIDER */
+  .range-wrap { margin-bottom:16px; }
+  .range-labels { display:flex; justify-content:space-between; margin-bottom:12px; }
+  .range-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.1em; color:var(--fog); text-transform:uppercase; }
+  input[type="range"] { width:100%; -webkit-appearance:none; height:4px; background:var(--paper); outline:none; border-radius:2px; margin-bottom:12px; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:24px; height:24px; background:var(--rust); border-radius:50%; cursor:pointer; border:3px solid var(--cream); box-shadow:0 2px 6px rgba(0,0,0,.2); }
+  .days-display-wrap { text-align:center; }
+  .range-value { font-family:'Playfair Display',serif; font-size:48px; font-weight:700; color:var(--rust); line-height:1; transition:all .2s; }
+  .range-unit { font-family:'DM Mono',monospace; font-size:11px; color:var(--fog); margin-top:2px; }
+  .days-quip { font-family:'Newsreader',serif; font-style:italic; font-size:15px; color:var(--ink); background:var(--paper); padding:12px 16px; margin-top:14px; border-left:3px solid var(--gold); transition:all .3s; min-height:54px; line-height:1.55; }
+  .days-quip.warning { border-left-color:var(--rust); background:#FFF0F0; color:var(--rust); }
+  .daytrip-teaser { background:var(--sage); color:var(--cream); padding:14px 16px; margin-top:14px; display:none; animation:fadeUp .3s ease; }
+  .daytrip-teaser.visible { display:block; }
+  .dt-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:rgba(245,240,232,.65); margin-bottom:4px; }
+  .dt-text { font-size:14px; font-style:italic; }
+
+  /* REDWOODS / SHUTDOWN TOGGLE */
+  .shutdown-toggle { display:flex; align-items:center; gap:12px; background:var(--paper); padding:14px 16px; margin-top:0; margin-bottom:24px; cursor:pointer; border:1.5px solid transparent; transition:border-color .2s; }
+  .shutdown-toggle:has(input:checked) { border-color:var(--rust); }
+  .shutdown-toggle input { width:18px; height:18px; accent-color:var(--rust); cursor:pointer; flex-shrink:0; }
+  .shutdown-label { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:.08em; line-height:1.5; }
+  .shutdown-label strong { display:block; color:var(--rust); margin-bottom:2px; }
+  .shutdown-label span { color:var(--fog); font-size:10px; }
+
+  /* ITINERARY */
+  #screen-itinerary { background:var(--warm-white); }
+  .itinerary-header { background:var(--dusk); color:var(--cream); padding:32px 20px 28px; text-align:center; }
+  .it-eyebrow { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.2em; color:var(--gold); margin-bottom:10px; }
+  .it-title { font-family:'Playfair Display',serif; font-size:32px; font-style:italic; line-height:1.1; }
+  .it-meta { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.12em; color:rgba(245,240,232,.5); margin-top:10px; }
+  .it-stay-badge { display:inline-block; margin-top:12px; background:rgba(200,150,42,.2); border:1px solid var(--gold); color:var(--gold); font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.12em; padding:5px 12px; }
+
+  .day-block { max-width:480px; margin:0 auto; padding:0 20px; }
+  .day-header { display:flex; align-items:center; gap:14px; padding:28px 0 16px; border-bottom:1.5px solid var(--paper); }
+  .day-num { font-family:'Playfair Display',serif; font-size:44px; font-weight:700; color:var(--paper); line-height:1; -webkit-text-stroke:1.5px var(--ink); }
+  .day-info .day-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--fog); }
+  .day-info .day-title { font-family:'Playfair Display',serif; font-size:18px; font-weight:700; }
+
+  .stop-item { padding:18px 0; border-bottom:1px solid var(--paper); }
+  .stop-header { display:flex; gap:16px; }
+  .stop-time-col { flex-shrink:0; width:52px; text-align:right; }
+  .stop-time { font-family:'DM Mono',monospace; font-size:10px; color:var(--fog); letter-spacing:.05em; }
+  .stop-dot { width:8px; height:8px; border-radius:50%; background:var(--rust); margin:4px auto 0; }
+  .stop-content { flex:1; }
+  .stop-tag { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--sage); margin-bottom:3px; }
+  .stop-name { font-family:'Playfair Display',serif; font-size:17px; font-weight:700; margin-bottom:4px; }
+  .stop-desc { font-size:13px; color:var(--dusk); line-height:1.55; }
+  .stop-sam-note { background:var(--paper); border-left:2px solid var(--gold); padding:8px 10px; margin-top:8px; font-size:12px; font-style:italic; color:var(--dusk); }
+  .stop-sam-note::before { content:'Sam says: '; font-family:'DM Mono',monospace; font-style:normal; font-size:9px; letter-spacing:.12em; color:var(--gold); display:block; margin-bottom:2px; }
+.neighborhood-banner { background:var(--ink); color:var(--cream); padding:10px 14px; margin:18px 0 0; display:flex; align-items:center; gap:10px; }
+  .nb-pin { font-size:14px; }
+  .nb-name { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.15em; text-transform:uppercase; flex:1; }
+
+  /* DAY TRIP BLOCK */
+  .daytrip-block { background:var(--sage); color:var(--cream); padding:0 0 24px; }
+  .daytrip-inner { max-width:480px; margin:0 auto; padding:0 20px; }
+  .daytrip-header { display:flex; align-items:center; gap:14px; padding:28px 0 16px; border-bottom:1px solid rgba(245,240,232,.2); }
+  .daytrip-badge { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.18em; text-transform:uppercase; background:var(--gold); color:var(--ink); padding:3px 8px; display:inline-block; margin-bottom:6px; }
+  .daytrip-block .day-num { -webkit-text-stroke-color:rgba(245,240,232,.3); color:rgba(245,240,232,.15); }
+  .daytrip-block .day-title { color:var(--cream); }
+  .daytrip-block .day-label { color:rgba(245,240,232,.55); }
+  .daytrip-block .stop-tag { color:rgba(245,240,232,.6); }
+  .daytrip-block .stop-name { color:var(--cream); }
+  .daytrip-block .stop-desc { color:rgba(245,240,232,.85); }
+  .daytrip-block .stop-sam-note { background:rgba(28,26,23,.3); border-color:var(--gold); color:rgba(245,240,232,.9); }
+  .daytrip-block .stop-time { color:rgba(245,240,232,.5); }
+  .daytrip-block .stop-dot { background:var(--gold); }
+  .daytrip-block .neighborhood-banner { background:rgba(28,26,23,.4); }
+  .daytrip-block .stop-item { border-bottom-color:rgba(245,240,232,.15); }
+  .shutdown-note { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.1em; color:rgba(245,240,232,.55); padding:12px 0 0; font-style:italic; }
+  .daytrip-more { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.12em; color:rgba(245,240,232,.5); border-top:1px solid rgba(245,240,232,.15); margin-top:8px; padding-top:16px; }
+
+  /* ACTIONS */
+  .itinerary-actions { max-width:480px; margin:0 auto; padding:28px 20px 60px; }
+  .action-title { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--fog); margin-bottom:14px; }
+  .action-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+  .action-btn { background:var(--card-bg); border:1.5px solid var(--ink); padding:16px 12px; cursor:pointer; transition:all .18s; text-align:center; }
+  .action-btn:active { background:var(--ink); color:var(--cream); }
+  .action-btn .ab-icon { font-size:20px; display:block; margin-bottom:6px; }
+  .action-btn .ab-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; }
+  .action-send { background:var(--rust); color:var(--cream); border:none; padding:18px 24px; width:100%; cursor:pointer; font-family:'DM Mono',monospace; font-size:12px; letter-spacing:.15em; text-transform:uppercase; transition:all .2s; }
+  .action-send:active { background:#9a3915; transform:scale(.98); }
+  .send-note { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.1em; color:var(--fog); text-align:center; margin-top:10px; }
+
+  /* MODAL */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(28,26,23,.85); z-index:100; align-items:flex-end; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal-sheet { background:var(--cream); width:100%; max-width:480px; padding:28px 24px 40px; animation:slideUp .3s ease; position:relative; }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .modal-title { font-family:'Playfair Display',serif; font-size:22px; font-weight:700; margin-bottom:8px; }
+  .modal-sub { font-size:14px; color:var(--fog); font-style:italic; margin-bottom:20px; }
+  textarea { width:100%; border:1.5px solid var(--ink); background:var(--warm-white); padding:14px; font-family:'Newsreader',serif; font-size:14px; line-height:1.6; color:var(--ink); resize:none; height:120px; margin-bottom:14px; }
+  textarea:focus { outline:none; border-color:var(--rust); }
+  input[type="text"] { width:100%; border:1.5px solid var(--ink); background:var(--warm-white); padding:14px; font-family:'DM Mono',monospace; font-size:13px; color:var(--ink); margin-bottom:10px; }
+  input[type="text"]:focus { outline:none; border-color:var(--rust); }
+  .modal-close { position:absolute; top:16px; right:20px; background:none; border:none; font-size:20px; cursor:pointer; color:var(--fog); }
+
+  /* LOADING */
+  #screen-loading { display:none; align-items:center; justify-content:center; min-height:60vh; flex-direction:column; gap:20px; padding:40px 20px; }
+  #screen-loading.active { display:flex; }
+  .loading-text { font-family:'Playfair Display',serif; font-size:22px; font-style:italic; text-align:center; }
+  .loading-sub { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.2em; color:var(--fog); text-transform:uppercase; }
+  .loader-dots { display:flex; gap:8px; }
+  .loader-dots span { width:8px; height:8px; background:var(--rust); border-radius:50%; animation:pulse 1.2s ease-in-out infinite; }
+  .loader-dots span:nth-child(2) { animation-delay:.2s; }
+  .loader-dots span:nth-child(3) { animation-delay:.4s; }
+  @keyframes pulse { 0%,80%,100%{opacity:.2;transform:scale(.8)} 40%{opacity:1;transform:scale(1.1)} }
+
+  @media print {
+    .site-header,.itinerary-actions,#screen-intro,#screen-q1,#screen-q2,#screen-q3,#screen-q4,#screen-q5,#screen-q6,#screen-q7,#screen-loading { display:none!important; }
+    #screen-itinerary { display:block!important; }
+    .itinerary-header { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    body { background:white; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-eyebrow">A personal guide by</div>
+  <h1 class="header-title">Sam's <em>SF</em></h1>
+  <p class="header-sub">Sam &amp; Lucy's guide to the city they love.</p>
+</header>
+
+<!-- ══════════════════════ INTRO ══════════════════════ -->
+<div id="screen-intro" class="screen active">
+  <div class="screen-inner">
+    <div class="intro-note">
+      <p>Hey! Lucy and I moved to SF in September 2025, and we've been exploring obsessively ever since. This isn't a decade-long local's bible — it's something better: a list built by two people who arrived curious, ate everything, walked every neighborhood, and kept track of what was actually worth it.</p>
+      <p style="margin-top:12px">Answer a few quick questions. Get a day-by-day itinerary built from our real list. Then text me — I want to know you're coming.</p>
+      <div class="sig">— Sam &amp; Lucy, Polk Gulch</div>
+    </div>
+    <div class="intro-stats">
+      <div class="stat-block"><span class="stat-num">50+</span><span class="stat-label">Vetted spots</span></div>
+      <div class="stat-block"><span class="stat-num">8</span><span class="stat-label">Neighborhoods</span></div>
+      <div class="stat-block"><span class="stat-num">0</span><span class="stat-label">Tourist traps</span></div>
+    </div>
+    <button class="btn-primary" onclick="goTo('screen-q1')">Build my itinerary →</button>
+    <button class="btn-secondary" onclick="buildItinerary();goTo('screen-itinerary')">Just show me everything</button>
+  </div>
+</div>
+
+<!-- ══════════════════════ Q1: VIBE ══════════════════════ -->
+<div id="screen-q1" class="screen">
+  <div class="screen-inner">
+    <div class="q-step"><span class="q-num">1 / 7</span><div class="q-progress-bar"><div class="q-progress-fill" style="width:14%"></div></div></div>
+    <div class="q-label">The vibe check</div>
+    <h2 class="q-title">What kind of trip is this?</h2>
+    <p class="q-subtitle">Pick the one that feels most right.</p>
+    <div class="choice-grid">
+      <div class="choice-card" data-q="vibe" data-val="chill" onclick="selectCard(this)"><span class="card-emoji">🌫️</span><span class="card-title">Slow & foggy</span><span class="card-desc">Coffee, walks, no agenda</span></div>
+      <div class="choice-card" data-q="vibe" data-val="explore" onclick="selectCard(this)"><span class="card-emoji">🗺️</span><span class="card-title">Explorer mode</span><span class="card-desc">Neighborhoods, hidden spots</span></div>
+      <div class="choice-card" data-q="vibe" data-val="eat" onclick="selectCard(this)"><span class="card-emoji">🍜</span><span class="card-title">Eating my way through</span><span class="card-desc">Bites, drinks, repeat</span></div>
+      <div class="choice-card" data-q="vibe" data-val="night" onclick="selectCard(this)"><span class="card-emoji">🍻</span><span class="card-title">Night owl</span><span class="card-desc">Bars, late spots, good times</span></div>
+    </div>
+    <button class="btn-primary" onclick="nextQ('screen-q2')">Next →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════ Q2: DAYS ══════════════════════ -->
+<div id="screen-q2" class="screen">
+  <div class="screen-inner">
+    <div class="q-step"><span class="q-num">2 / 7</span><div class="q-progress-bar"><div class="q-progress-fill" style="width:28%"></div></div></div>
+    <div class="q-label">Time check</div>
+    <h2 class="q-title">How long are you here?</h2>
+    <p class="q-subtitle">I'll pace it so nothing feels rushed.</p>
+    <div class="range-wrap">
+      <div class="range-labels"><span class="range-label">1 day</span><span class="range-label">6 days</span></div>
+      <input type="range" id="days-range" min="1" max="7" value="3" step="1" oninput="updateDays(this.value)">
+      <div class="days-display-wrap">
+        <div class="range-value" id="days-display">3</div>
+        <div class="range-unit" id="days-unit">days in SF</div>
+      </div>
+      <div class="days-quip" id="days-quip">Three days — long enough to really dig in without rushing anything.</div>
+      <div class="daytrip-teaser" id="daytrip-teaser">
+        <div class="dt-label">🌲 Day trip unlocked</div>
+        <div class="dt-text">With this much time, I'll add a day trip option — redwoods, Angel Island, or Sausalito. You earned it.</div>
+      </div>
+    </div>
+    <button class="btn-primary" id="days-next-btn" onclick="nextQ('screen-q3')">Next →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════ Q3: STAY ══════════════════════ -->
+<div id="screen-q3" class="screen">
+  <div class="screen-inner">
+    <div class="q-step"><span class="q-num">3 / 7</span><div class="q-progress-bar"><div class="q-progress-fill" style="width:42%"></div></div></div>
+    <div class="q-label">Home base</div>
+    <h2 class="q-title">Where are you staying?</h2>
+    <p class="q-subtitle">Affects routing more than you'd think.</p>
+    <div style="margin-bottom:28px">
+      <div class="accom-card" data-q="stay" data-val="twin" onclick="selectCard(this)">
+<div class="accom-body"><div class="accom-tag">🛏️ Sam & Lucy's · Twin air mattress</div><div class="accom-title">The floor plan option</div><div class="accom-desc">Our living room, 1909 walkup, Polk Gulch. Cozy. Compact. Character-filled.</div><div class="accom-note">You're sleeping in our living room — full transparency. But you're also two blocks from Swan Oyster Depot and Bob's Donuts, so really you're winning.</div></div>
+      </div>
+      <div class="accom-card" data-q="stay" data-val="full" onclick="selectCard(this)">
+<div class="accom-body"><div class="accom-tag">🛏️🛏️ Sam & Lucy's · Full air mattress</div><div class="accom-title">The deluxe floor plan option</div><div class="accom-desc">Same living room. More square footage per person.</div><div class="accom-note">For couples or people who sprawl in their sleep. You know who you are. Same great location, same cat judgement.</div></div>
+      </div>
+      <div class="accom-card" data-q="stay" data-val="hotel" onclick="selectCard(this)">
+<div class="accom-body"><div class="accom-tag">🏨 Hotel</div><div class="accom-title">Doing it properly</div><div class="accom-desc">We have recs here too — just ask.</div><div class="accom-note">We can suggest good options at different price points. Polk Gulch / Lower Nob Hill area will put you near most of our spots.</div></div>
+      </div>
+      <div class="accom-card" data-q="stay" data-val="airbnb" onclick="selectCard(this)">
+<div class="accom-body"><div class="accom-tag">🏠 Airbnb</div><div class="accom-title">Your own spot</div><div class="accom-desc">Fully reasonable. The Mission and Lower Haight are our picks for neighborhood feel.</div><div class="accom-note">Tell me where you end up and I'll route everything around you.</div></div>
+      </div>
+      <div class="accom-card" data-q="stay" data-val="other" onclick="selectCard(this)">
+<div class="accom-body"><div class="accom-tag">👥 Staying with someone else</div><div class="accom-title">You've got connections</div><div class="accom-desc">Friend in the city or Bay Area. Very valid.</div><div class="accom-note">Just tell me what neighborhood and we'll work from there. SF is small — nowhere is that far.</div></div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="nextQ('screen-q4')">Next →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════ Q4: FOOD ══════════════════════ -->
+<div id="screen-q4" class="screen">
+  <div class="screen-inner">
+    <div class="q-step"><span class="q-num">4 / 7</span><div class="q-progress-bar"><div class="q-progress-fill" style="width:57%"></div></div></div>
+    <div class="q-label">Food is serious here</div>
+    <h2 class="q-title">Your eating style?</h2>
+    <p class="q-subtitle">Sam has strong opinions on all of these.</p>
+    <div class="choice-grid">
+      <div class="choice-card" data-q="food" data-val="cheap" onclick="selectCard(this)"><span class="card-emoji">🌯</span><span class="card-title">Cheap & perfect</span><span class="card-desc">$10–15 that absolutely slap</span></div>
+      <div class="choice-card" data-q="food" data-val="ethnic" onclick="selectCard(this)"><span class="card-emoji">🥟</span><span class="card-title">Ethnic deep cuts</span><span class="card-desc">Pakistani, Burmese, dim sum, all of it</span></div>
+      <div class="choice-card" data-q="food" data-val="brunch" onclick="selectCard(this)"><span class="card-emoji">🥚</span><span class="card-title">Brunch people</span><span class="card-desc">Worth the wait. Always.</span></div>
+      <div class="choice-card" data-q="food" data-val="splurge" onclick="selectCard(this)"><span class="card-emoji">🥩</span><span class="card-title">One real splurge</span><span class="card-desc">House of Prime Rib energy</span></div>
+    </div>
+    <button class="btn-primary" onclick="nextQ('screen-q5')">Next →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════ Q5: OUTDOORS ══════════════════════ -->
+<div id="screen-q5" class="screen">
+  <div class="screen-inner">
+    <div class="q-step"><span class="q-num">5 / 7</span><div class="q-progress-bar"><div class="q-progress-fill" style="width:71%"></div></div></div>
+    <div class="q-label">SF is outside-optional</div>
+    <h2 class="q-title">How outdoorsy are you?</h2>
+    <p class="q-subtitle">No judgment in any direction.</p>
+    <div class="choice-grid single-col">
+      <div class="choice-card" data-q="outdoors" data-val="yes" onclick="selectCard(this)"><span class="card-emoji">🥾</span><span class="card-title">Give me trails & views</span><span class="card-desc">Land's End, Bernal Heights, Marin Headlands</span></div>
+      <div class="choice-card" data-q="outdoors" data-val="mild" onclick="selectCard(this)"><span class="card-emoji">🌳</span><span class="card-title">Parks & easy strolls</span><span class="card-desc">Dolores, the Presidio, waterfront walks</span></div>
+      <div class="choice-card" data-q="outdoors" data-val="no" onclick="selectCard(this)"><span class="card-emoji">🛋️</span><span class="card-title">Outdoor seating counts, right?</span><span class="card-desc">Cafés, bars, fully covered</span></div>
+    </div>
+    <button class="btn-primary" onclick="nextQ('screen-q6')">Next →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════ Q6: REDWOODS ══════════════════════ -->
+<div id="screen-q6" class="screen">
+  <div class="screen-inner">
+    <div class="q-step"><span class="q-num">6 / 7</span><div class="q-progress-bar"><div class="q-progress-fill" style="width:85%"></div></div></div>
+    <div class="q-label">The big one</div>
+    <h2 class="q-title">Do you want to see the redwoods?</h2>
+    <p class="q-subtitle">Ancient trees 45 minutes from downtown. Yes, really.</p>
+    <div class="choice-grid single-col" style="margin-bottom:16px">
+      <div class="choice-card" data-q="redwoods" data-val="yes" onclick="selectCard(this)"><span class="card-emoji">🌲</span><span class="card-title">Obviously yes</span><span class="card-desc">I didn't fly to SF to not see giant trees</span></div>
+      <div class="choice-card" data-q="redwoods" data-val="no" onclick="selectCard(this)"><span class="card-emoji">🏙️</span><span class="card-title">Keep it city</span><span class="card-desc">I'll save the trees for next time</span></div>
+    </div>
+    <!-- Government shutdown toggle — only shown if redwoods = yes -->
+    <div id="shutdown-wrap" style="display:none">
+      <label class="shutdown-toggle">
+        <input type="checkbox" id="shutdown-check" onchange="answers.govShutdown=this.checked">
+        <div class="shutdown-label">
+          <strong>⚠️ Government shutdown active?</strong>
+          <span>Muir Woods is a federal park (NPS). Check this and I'll route to a state park instead — same ancient trees, no federal drama.</span>
+        </div>
+      </label>
+    </div>
+    <button class="btn-primary" onclick="nextQ('screen-q7')">Next →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════ Q7: WHO ══════════════════════ -->
+<div id="screen-q7" class="screen">
+  <div class="screen-inner">
+    <div class="q-step"><span class="q-num">7 / 7</span><div class="q-progress-bar"><div class="q-progress-fill" style="width:100%"></div></div></div>
+    <div class="q-label">Last one, I promise</div>
+    <h2 class="q-title">Who's on this trip?</h2>
+    <p class="q-subtitle">I'll tweak the energy accordingly.</p>
+    <div class="choice-grid">
+      <div class="choice-card" data-q="who" data-val="solo" onclick="selectCard(this)"><span class="card-emoji">🧍</span><span class="card-title">Just me</span><span class="card-desc">Solo mode, full freedom</span></div>
+      <div class="choice-card" data-q="who" data-val="couple" onclick="selectCard(this)"><span class="card-emoji">👫</span><span class="card-title">Couple</span><span class="card-desc">Romantic or just together</span></div>
+      <div class="choice-card" data-q="who" data-val="friends" onclick="selectCard(this)"><span class="card-emoji">👯</span><span class="card-title">Friends</span><span class="card-desc">Group chaos, the good kind</span></div>
+      <div class="choice-card" data-q="who" data-val="family" onclick="selectCard(this)"><span class="card-emoji">👨‍👩‍👧</span><span class="card-title">Family</span><span class="card-desc">Mix of ages and energy</span></div>
+    </div>
+    <button class="btn-primary" onclick="generate()">Build my itinerary →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════ LOADING ══════════════════════ -->
+<div id="screen-loading" class="screen">
+  <div class="loading-text" id="loading-text">Curating your SF…</div>
+  <div class="loader-dots"><span></span><span></span><span></span></div>
+  <div class="loading-sub" id="loading-sub">Pulling Sam's picks</div>
+</div>
+
+<!-- ══════════════════════ ITINERARY ══════════════════════ -->
+<div id="screen-itinerary" class="screen">
+  <div class="itinerary-header">
+    <div class="it-eyebrow">Your Custom SF Itinerary</div>
+    <div class="it-title" id="it-title">A Perfect Few Days<br>in San Francisco</div>
+    <div class="it-meta" id="it-meta">Curated by Sam · Polk Gulch</div>
+    <div class="it-stay-badge" id="it-stay-badge" style="display:none"></div>
+  </div>
+  <div id="itinerary-content"></div>
+  <div class="itinerary-actions">
+    <div class="action-title">What would you like to do?</div>
+    <div class="action-grid">
+      <button class="action-btn" onclick="window.print()"><span class="ab-icon">🖨️</span><span class="ab-label">Save as PDF</span></button>
+      <button class="action-btn" onclick="copyItinerary()"><span class="ab-icon">📋</span><span class="ab-label">Copy text</span></button>
+    </div>
+    <button class="action-send" onclick="openSendModal()">📲 Text this to Sam</button>
+    <div class="send-note">Opens a pre-filled message so Sam knows you're coming</div>
+  </div>
+</div>
+
+<!-- ══════════════════════ MODAL ══════════════════════ -->
+<div class="modal-overlay" id="send-modal" onclick="closeModal(event)">
+  <div class="modal-sheet">
+    <button class="modal-close" onclick="document.getElementById('send-modal').classList.remove('open')">✕</button>
+    <div class="modal-title">Text Sam your plan</div>
+    <div class="modal-sub">He'll know you're coming and can make last-minute tweaks.</div>
+    <input type="text" id="sender-name" placeholder="Your name" oninput="updateMessagePreview()">
+    <input type="text" id="sender-dates" placeholder="When you're visiting (e.g. March 14–16)" oninput="updateMessagePreview()">
+    <textarea id="message-preview"></textarea>
+    <button class="btn-primary" onclick="sendToSam()">Open in Messages →</button>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+const answers = { vibe:null, days:3, food:null, outdoors:null, who:null, stay:null, redwoods:null, govShutdown:false };
+
+// ════════════════════════════════════════
+// SAM'S REAL SPOTS DATABASE
+// All drawn from his Google Maps list + curated additions
+// ════════════════════════════════════════
+const DB = {
+
+  coffee: [
+    { name:"Arsicault Bakery", hood:"Inner Richmond", type:"☕ Bakery & Coffee", time:"8:30 AM",
+      desc:"The croissant that made SF take notice. James Beard Award winner. The line moves fast.",
+      note:"Get the croissant. That's it. That's the whole instruction. It will ruin other croissants for you." },
+    { name:"The Social Study", hood:"Mission", type:"☕ Café", time:"9:00 AM",
+      desc:"Serious coffee in a warm, book-lined space. Closes at 10:30pm — rare for a café.",
+      note:"One of those rare places that's perfect for morning coffee AND an afternoon beer. Very SF energy." },
+    { name:"Amelie San Francisco", hood:"Russian Hill", type:"☕ French Wine Bar / Café", time:"9:00 AM",
+      desc:"Tiny French café by day, wine bar by night. One of the most charming rooms in the city.",
+      note:"Come back in the evening for a glass of wine and you'll feel like you're in Paris. It really works." },
+    { name:"Bob's Donut & Pastry Shop", hood:"Polk Gulch", type:"🍩 24hr Donuts", time:"Late night / anytime",
+      desc:"24 hours. Cash only. The apple fritter is the size of your head. Open since 1960.",
+      note:"This is my neighborhood spot. I've been here at 2am and 8am and both times were correct decisions." },
+    { name:"Java Beach Cafe", hood:"Outer Sunset", type:"☕ Café", time:"8:30 AM",
+      desc:"Steps from Ocean Beach. Grab coffee and walk to the water. Classic Sunset morning.",
+      note:"The Outer Sunset is an underrated neighborhood and this is the perfect place to start it." },
+  ],
+
+  food_cheap: [
+    { name:"El Gallo Giro Food Truck", hood:"Mission", type:"🌮 Mexican Food Truck", time:"12:00 PM",
+      desc:"4.8 stars. Legit Mission Mexican from a truck. Tacos, burritos, tortas — all excellent.",
+      note:"Don't sleep on the tortas. The truck moves but it's worth hunting down. Cash preferred." },
+    { name:"Pakwan Restaurant", hood:"Mission / Tenderloin", type:"🍛 Pakistani", time:"7:00 PM",
+      desc:"$10–15 for genuinely excellent Pakistani food. Biryani, karahi, naan baked in-house. Open late.",
+      note:"This is the kind of place you find once and keep coming back to. No frills, all flavor." },
+    { name:"House of Nanking", hood:"Chinatown", type:"🥡 Chinese", time:"12:30 PM",
+      desc:"The chef tells you what to order. You say yes. Lines out the door for 30+ years.",
+      note:"Don't bother with the menu too hard — tell them your preferences and let them cook. Trust the process." },
+    { name:"Swan Oyster Depot", hood:"Polk Gulch", type:"🦪 Seafood Counter", time:"10:30 AM",
+      desc:"Counter-only, cash only, closes at 5:30pm. Best clam chowder and crab cocktail in SF. Since 1912.",
+      note:"They close at 5:30pm and this has burned me personally. Get there at opening if you can. Cash only." },
+    { name:"Himalayan Cuisine SF", hood:"Polk Gulch", type:"🍲 Himalayan/Nepali", time:"7:00 PM",
+      desc:"Warm, affordable Himalayan food right in my neighborhood. Momos and dal are excellent.",
+      note:"A true neighborhood gem. Feels like eating at someone's house. The momos are mandatory." },
+    { name:"Mayaflor", hood:"Mission", type:"🌺 Mexican", time:"7:30 PM",
+      desc:"Modern Mission Mexican with serious technique. Not your average taqueria — more composed plates.",
+      note:"Great for when you want Mexican food with a bit more intention behind it. Good cocktails too." },
+    { name:"Mixto Latin Cuisine", hood:"Outer Sunset", type:"🥘 Latin American", time:"7:00 PM",
+      desc:"Pan-Latin spot near Ocean Beach. Solid food in a neighborhood that rewards exploration.",
+      note:"Out by the beach, which makes it feel like a real local find. Pair with a walk on Ocean Beach." },
+  ],
+
+  food_splurge: [
+    { name:"House of Prime Rib", hood:"Polk Gulch", type:"🥩 Prime Rib", time:"6:00 PM",
+      desc:"$50–100. The tableside prime rib cart. Spinning salad bowl. Yorkshires. A genuine SF institution since 1949.",
+      note:"Make a reservation weeks in advance. Dress nicely. Order the English cut. This is a full experience." },
+    { name:"Collina", hood:"Inner Sunset", type:"🍝 Italian", time:"7:00 PM",
+      desc:"4.8 stars. Neighborhood Italian that punches way above its weight. Handmade pasta, seasonal menu.",
+      note:"This is the kind of Italian place you find in SF and then tell everyone about. Reservation recommended." },
+    { name:"Del Popolo", hood:"Nob Hill", type:"🍕 Wood-fired Pizza", time:"6:30 PM",
+      desc:"Neapolitan-style pizza from a wood-fired oven. Started as a food truck, earned a permanent home.",
+      note:"The margherita is better than it has any right to be. Get a bottle of natural wine and settle in." },
+    { name:"Orphan Andy's", hood:"Castro", type:"🍳 24hr Diner", time:"Late night",
+      desc:"Open 24 hours. Neon signs, rainbow decor, massive portions, $20–30. A Castro icon.",
+      note:"Charming affordable diner with stunning decorations and lighting. Perfect post-bar food. Welcoming to all." },
+    { name:"Beach Chalet Brewery", hood:"Outer Sunset", type:"🍺 Brewery / Restaurant", time:"5:00 PM",
+      desc:"Craft beers in a historic WPA-mural building right on the western edge of Golden Gate Park. Ocean views.",
+      note:"Get here before sunset and grab a window seat. The combination of the murals, beer, and ocean is perfect." },
+  ],
+
+  bars_dive: [
+    { name:"Phone Booth", hood:"Mission", type:"🍺 Dive Bar", time:"9:00 PM",
+      desc:"Cash only. CD jukebox. Dark. Cheap. Perfect. One of SF's most beloved dives.",
+      note:"Best jukebox in San Francisco. Don't dress up. This is my spot and I will defend it forever." },
+    { name:"Zam Zam", hood:"Haight", type:"🍸 Legendary Dive", time:"4:00 PM",
+      desc:"Cash only. The martinis are famously correct. A Haight-Ashbury institution with real history.",
+      note:"The bartenders make proper martinis and they care about it. Cash only. One of SF's true originals." },
+    { name:"Mauna Loa Club", hood:"Mission", type:"🌺 Dive Bar", time:"8:00 PM",
+      desc:"Back patio, arcade games, pool table. Tiki-adjacent dive with a loyal neighborhood crowd.",
+      note:"Good dive — back patio is underrated on a warm night. Pool table, good jukebox, no pretense." },
+    { name:"The Riptide", hood:"Outer Sunset", type:"🔥 Dive Bar w/ Fireplace", time:"4:00 PM",
+      desc:"Real wood-burning fireplace. Cozy local crowd. Bloody Marys that mean business. Cash and cards.",
+      note:"Cozy local spot, mean age about 38, real fireplace managed by bar staff. The Bloody Mary is mandatory." },
+    { name:"Kilowatt Bar", hood:"Mission", type:"🎸 Dive Bar", time:"9:00 PM",
+      desc:"Grungy, unpretentious Mission dive. Cheap drinks, pool table, no nonsense.",
+      note:"Exactly what it looks like from the outside. That's a compliment." },
+    { name:"The Saloon", hood:"North Beach", type:"🎵 Historic Dive", time:"9:00 PM",
+      desc:"SF's oldest bar, est. 1861. Live blues nightly. Tourists don't know about it. Locals love it.",
+      note:"Genuinely the oldest bar in SF. Live blues almost every night. Dark, loud, and correctly so." },
+    { name:"The Homestead", hood:"Mission", type:"🍺 Bar", time:"4:00 PM",
+      desc:"Solid Mission neighborhood bar. Good beer selection, no attitude, comfortable all day.",
+      note:"A reliable, well-run bar that doesn't try to be anything other than a good neighborhood bar. Underrated." },
+  ],
+
+  bars_cocktail: [
+    { name:"Stookey's Club Moderne", hood:"Tenderloin", type:"🍹 Cocktail Bar", time:"7:00 PM",
+      desc:"1930s supper club aesthetic. Pre-Prohibition cocktails done properly. One of SF's best bars.",
+      note:"Opens at 5pm. Dress how you feel. The cocktail list is serious and the bartenders know their stuff." },
+    { name:"The House of Shields", hood:"Financial District", type:"🥃 Historic Bar", time:"3:00 PM",
+      desc:"Opens at 2pm. Downtown power bar since 1908. Dark wood, proper cocktails, interesting crowd.",
+      note:"One of those bars that's survived everything SF has thrown at it since 1908. The Manhattan is correct." },
+    { name:"Churchill Cocktail Bar", hood:"Mission", type:"🍸 Cocktail Bar", time:"7:00 PM",
+      desc:"Well-crafted cocktails in a comfortable Mission room. Not trying too hard. Gets it right.",
+      note:"Solid neighborhood cocktail bar that punches above its weight. Good for a proper evening drink." },
+    { name:"Peacekeeper", hood:"Mission", type:"🍸 Bar", time:"6:00 PM",
+      desc:"Natural wine and low-intervention spirits in a cozy Mission spot. Knowledgeable, unpretentious staff.",
+      note:"For when you want good wine without the stuffy atmosphere. Great bar snacks. Very much my vibe." },
+    { name:"Vesuvio Café", hood:"North Beach", type:"🖊️ Historic Bar", time:"4:00 PM",
+      desc:"Beat Generation bar since 1948. Jack Kerouac drank here. Next to City Lights Bookstore.",
+      note:"Order a Bohemian coffee and read the walls. Then walk next door to City Lights. Essential SF." },
+    { name:"Owl Tree", hood:"Polk Gulch", type:"🦉 Bar", time:"6:00 PM",
+      desc:"Owl-themed neighborhood bar on Polk Street. Warm, quirky, local energy. Right in my backyard.",
+      note:"My neighborhood bar. If you're staying with me, we're probably walking here. The owls are everywhere." },
+    { name:"The Cinch Saloon", hood:"Polk Gulch", type:"🤠 Bar", time:"3:00 PM",
+      desc:"Classic Polk Gulch bar. Pool table, friendly crowd, open early. A neighborhood anchor.",
+      note:"Another one of my neighborhood spots. Good for an afternoon beer or a late night. No pretense." },
+  ],
+
+  parks: [
+    { name:"Bernal Heights Park", hood:"Bernal Heights", type:"🌄 Park & Summit", time:"5:30 PM",
+      desc:"Hidden summit with 360° views of the entire city and bay. Locals' secret. Go just before sunset.",
+      note:"Come here just before sunset for incredible 360° views of the city and the bay. Genuinely stunning." },
+    { name:"Dolores Park", hood:"Mission", type:"🌳 Park", time:"2:00 PM",
+      desc:"SF's living room. Picnic blankets, tamale lady, skyline views. Sunday afternoons are electric.",
+      note:"The Dolores Park experience is real. Get snacks, find a spot on the hill, don't rush." },
+    { name:"The Presidio", hood:"Presidio", type:"🌉 Park & History", time:"10:00 AM",
+      desc:"Former army base turned national park. Golden Gate views, forest trails, Crissy Field waterfront.",
+      note:"Underexplored by visitors. Walk from Crissy Field toward the bridge. The views keep getting better." },
+    { name:"Golden Gate Bridge Viewpoints", hood:"Presidio / Marin", type:"🌉 Iconic Viewpoint", time:"9:00 AM",
+      desc:"The Welcome Center side and the Marin Headlands side — two completely different views.",
+      note:"Walk across if you have time. But the view from the Marin Headlands is actually better than the bridge itself." },
+  ],
+
+  hikes: [
+    { name:"Land's End Trail", hood:"Richmond (Sutro Baths)", type:"🥾 Coastal Hike", time:"9:00 AM",
+      desc:"Shipwreck ruins, a cliffside labyrinth, ocean views. Best urban hike in SF, not even close.",
+      note:"Start at Sutro Baths ruins, go left on the trail. The stone labyrinth on the cliff is real and worth finding." },
+    { name:"Bernal Heights Summit Trail", hood:"Bernal Heights", type:"🥾 City Hike", time:"5:30 PM",
+      desc:"Short, steep, and stunning. 360° city views. Leash-free dogs. Beautiful at sunset.",
+      note:"Go at sunset. The view of the downtown skyline from up here is genuinely spectacular." },
+    { name:"Marin Headlands", hood:"Marin (30 min drive)", type:"🥾 Bay Area Hike", time:"8:30 AM",
+      desc:"Cross the bridge and hike back at it. Views of the entire city, bay, and ocean at once.",
+      note:"Hawk Hill on a clear morning. The perspective of SF from across the water is completely different." },
+  ],
+
+  attractions: [
+    { name:"Alcatraz Island", hood:"San Francisco Bay", type:"🏛️ Historic Site", time:"9:00 AM",
+      desc:"The island prison. More interesting than you'd expect. Book the audio tour — it's genuinely great.",
+      note:"Book tickets weeks in advance, especially for summer. The night tour is incredible if you can get it." },
+    { name:"Exploratorium", hood:"Embarcadero / Pier 15", type:"🔬 Museum", time:"10:00 AM",
+      desc:"World-class hands-on science museum. Adults love it as much as kids. On the waterfront.",
+      note:"Don't go thinking it's just for kids — it absolutely is not. Budget 3 hours minimum." },
+    { name:"Cable Car Museum", hood:"Nob Hill", type:"🚃 Free Museum", time:"10:00 AM",
+      desc:"Free. The actual working cable car machinery is underground here. Genuinely fascinating.",
+      note:"Free admission. The working sheave room with the cables running is surprisingly mesmerizing." },
+    { name:"City Lights Bookstore", hood:"North Beach", type:"📚 Bookstore", time:"11:00 AM",
+      desc:"The legendary Beat Generation bookstore. Still independently owned since 1953. Browse slowly.",
+      note:"This is a real cultural landmark, not a tourist trap. The poetry room upstairs is worth lingering in." },
+  ],
+
+  neighborhoods: [
+    { name:"The Mission District", hood:"Mission", type:"📍 Neighborhood Walk", time:"11:00 AM",
+      desc:"Murals, taquerias, dive bars, the best street energy in the city. My favorite SF neighborhood.",
+      note:"Walk 24th Street end to end. Look up constantly — the murals are everywhere. Eat at every opportunity." },
+    { name:"North Beach + Chinatown Walk", hood:"North Beach / Chinatown", type:"📍 Neighborhood Walk", time:"10:00 AM",
+      desc:"Start in Chinatown, walk up Columbus to North Beach, end at City Lights and Vesuvio. Classic SF.",
+      note:"Portsmouth Square → Grant Ave → Columbus → City Lights → Vesuvio. Do it in order. This is essential SF." },
+    { name:"Castro District", hood:"Castro", type:"📍 Neighborhood Walk", time:"2:00 PM",
+      desc:"One of the most historically significant neighborhoods in America. Alive, proud, worth every step.",
+      note:"Harvey Milk Plaza, the Castro Theatre, Orphan Andy's if you're hungry. Walk it slowly." },
+    { name:"Polk Gulch", hood:"Polk Gulch", type:"📍 My Neighborhood", time:"12:00 PM",
+      desc:"My home turf. Bar row on Polk Street, Swan Oyster Depot, Bob's Donuts, Aquatic Park at the bottom.",
+      note:"This is where I live. If you're here, text me — I can probably just walk over." },
+  ],
+
+  daytrips: [
+    // Federal (NPS) - blocked during government shutdown
+    { name:"Muir Woods National Monument", hood:"Mill Valley, Marin (45 min)", type:"🌲 Ancient Redwoods", time:"8:00 AM", federal:true,
+      desc:"Old-growth coastal redwoods. Some of these trees are over 1,000 years old. Cathedral quiet.",
+      note:"Reserve parking or the shuttle in advance — they enforce this. Go on a weekday if possible. Genuinely breathtaking." },
+    // State parks - work during shutdown
+    { name:"Armstrong Redwoods State Reserve", hood:"Guerneville (1.5 hrs)", type:"🌲 Ancient Redwoods (State Park)", time:"8:00 AM", federal:false,
+      desc:"Ancient redwoods in Sonoma County. Just as awe-inspiring as Muir Woods, less crowded, no shuttle required.",
+      note:"State park — no federal shutdown issues. The Colonel Armstrong Tree is 1,400 years old. Worth the drive." },
+    { name:"Samuel P. Taylor State Park", hood:"Lagunitas, Marin (45 min)", type:"🌲 Redwoods (State Park)", time:"8:30 AM", federal:false,
+      desc:"Stunning redwood forest in Marin, just past Fairfax. Same drive direction as Muir Woods, state-run.",
+      note:"My backup when Muir Woods is sold out or shut down. Equally beautiful, far fewer people." },
+    // Other day trips
+    { name:"Sausalito", hood:"Sausalito, Marin (25 min)", type:"⛵ Waterfront Town", time:"9:30 AM", federal:false,
+      desc:"Walk or bike over the Golden Gate Bridge, have lunch in Sausalito, take the ferry back. Perfect day.",
+      note:"Rent bikes at Fisherman's Wharf, over the bridge, lunch in Sausalito, ferry home. The route is the thing." },
+    { name:"Angel Island State Park", hood:"San Francisco Bay (Ferry from Pier 41)", type:"🏝️ Island (State Park)", time:"9:00 AM", federal:false,
+      desc:"Car-free island with 360° bay views, abandoned WWII history, and great hiking. Ferry from Pier 41.",
+      note:"Rent bikes on the island and circle the whole thing. The views of the city from the water are unreal." },
+  ],
+};
+
+// ════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+function selectCard(card) {
+  const q = card.dataset.q;
+  document.querySelectorAll(`[data-q="${q}"]`).forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  answers[q] = card.dataset.val;
+  // Show shutdown toggle if redwoods = yes
+  if (q === 'redwoods') {
+    document.getElementById('shutdown-wrap').style.display = card.dataset.val === 'yes' ? 'block' : 'none';
+  }
+}
+
+function nextQ(next) { goTo(next); }
+
+// ════════════════════════════════════════
+// DAYS SLIDER
+// ════════════════════════════════════════
+const quips = {
+  1:"One day — tight but doable. I know exactly what to prioritize.",
+  2:"Two days is actually the perfect first visit. Focused and satisfying.",
+  3:"Three days — long enough to really dig in without rushing anything.",
+  4:"Four days! You'll see sides of the city most visitors never find.",
+  5:"Five days means we hit some neighborhoods most tourists skip entirely.",
+  6:"Six full days. Honestly? You're basically a local by the end of this.",
+  7:"😅 Seven days? That's not a visit — that's a sublease. The city legally caps tourists at 6 days. It's in the charter.",
+};
+
+function updateDays(val) {
+  const v = parseInt(val);
+  const display = document.getElementById('days-display');
+  const quip = document.getElementById('days-quip');
+  const teaser = document.getElementById('daytrip-teaser');
+  const btn = document.getElementById('days-next-btn');
+
+  if (v === 7) {
+    display.textContent = '😅';
+    display.style.fontSize = '44px';
+    quip.textContent = quips[7];
+    quip.classList.add('warning');
+    btn.disabled = true;
+    document.getElementById('days-unit').textContent = '';
+  } else {
+    display.textContent = v;
+    display.style.fontSize = '48px';
+    document.getElementById('days-unit').textContent = 'days in SF';
+    quip.textContent = quips[v];
+    quip.classList.remove('warning');
+    btn.disabled = false;
+    answers.days = v;
+  }
+
+  teaser.classList.toggle('visible', v >= 3 && v <= 6);
+}
+
+// ════════════════════════════════════════
+// GENERATE
+// ════════════════════════════════════════
+function generate() {
+  const loadingLines = [
+    ["Curating your SF…","Pulling Sam's picks"],
+    ["Avoiding tourist traps…","This takes real vigilance"],
+    ["Consulting the fog…","Classic SF weather check"],
+    ["Checking bar hours…","A critical step"],
+    ["Hiding the Fisherman's Wharf entry…","You're welcome"],
+  ];
+  const [main, sub] = loadingLines[Math.floor(Math.random() * loadingLines.length)];
+  document.getElementById('loading-text').textContent = main;
+  document.getElementById('loading-sub').textContent = sub;
+  goTo('screen-loading');
+  setTimeout(() => { buildItinerary(); goTo('screen-itinerary'); }, 2000);
+}
+
+// ════════════════════════════════════════
+// BUILD ITINERARY
+// ════════════════════════════════════════
+function buildItinerary() {
+  const { vibe, days, food, outdoors, who, stay, redwoods, govShutdown } = answers;
+  const numDays = days || 3;
+
+  // Title logic
+  const titles = { chill:"A Slow, Foggy", explore:"An Explorer's", eat:"A Delicious", night:"A Late-Night", null:"Your Perfect" };
+  const t = titles[vibe] || "Your Perfect";
+  document.getElementById('it-title').innerHTML = `${t}<br>${numDays}-Day SF`;
+  document.getElementById('it-meta').textContent = `${numDays} day${numDays>1?'s':''} · Curated by Sam · Polk Gulch`;
+
+  // Stay badge
+  const badge = document.getElementById('it-stay-badge');
+  if (stay === 'twin') { badge.textContent = "🛏️ Sleeping in Sam & Lucy's living room (twin)"; badge.style.display = 'inline-block'; }
+  else if (stay === 'full') { badge.textContent = "🛏️🛏️ Sleeping in Sam & Lucy's living room (full)"; badge.style.display = 'inline-block'; }
+  else { badge.style.display = 'none'; }
+
+  let html = '';
+
+  for (let d = 1; d <= numDays; d++) {
+    html += buildDayHTML(d, numDays, answers);
+  }
+
+  // Day trip block (3+ days AND either redwoods requested OR just as bonus)
+  if (numDays >= 3) {
+    html += buildDayTripHTML(answers);
+  }
+
+  document.getElementById('itinerary-content').innerHTML = html;
+  updateMessagePreview();
+}
+
+const dayTitleMap = [
+  { chill:"Morning Fog & Good Coffee",     explore:"First Impressions",          eat:"The Essential Eats",        night:"Ease In, Then Out",      def:"Getting Your Bearings" },
+  { chill:"The Long Afternoon",             explore:"Across the City",            eat:"The Real SF Circuit",       night:"The Good Stuff Starts",  def:"Going Deeper" },
+  { chill:"Views & Nothing to Do",          explore:"Off the Map",                eat:"Eating More Seriously",     night:"The Full Night",         def:"The Hidden Layers" },
+  { chill:"The Slow Wind-Down",             explore:"Final Discoveries",          eat:"One Last Dish",             night:"Closing It Down",        def:"Unlocking the City" },
+  { chill:"No Rush, Just Air",              explore:"Deep Cuts Only",             eat:"The Grand Finale",          night:"Going Out Properly",     def:"Living Like a Local" },
+  { chill:"Last Morning, Coffee & Quiet",   explore:"The Farewell Tour",          eat:"Eating Like a Local",       night:"The Send-Off Night",     def:"One More Day" },
+];
+
+function buildDayHTML(d, total, ans) {
+  const { vibe, food, outdoors, who } = ans;
+  const meta = dayTitleMap[d-1] || dayTitleMap[0];
+  const title = meta[vibe || 'def'] || meta['def'];
+
+  const stops = [];
+
+  // MORNING: coffee / bakery
+  stops.push(DB.coffee[(d-1) % DB.coffee.length]);
+
+  // MORNING 2: brunch or attraction
+  if (food === 'brunch') {
+    // Use the splurge food section which has brunch-friendly spots
+    if (d === 1) stops.push(DB.food_splurge[3]); // Orphan Andy's
+    else stops.push(DB.food_cheap[2]); // House of Nanking
+  } else if (d === 1 && outdoors !== 'no') {
+    stops.push(DB.attractions[2]); // Cable Car Museum (free, central)
+  }
+
+  // MIDDAY: outdoors / neighborhood
+  if (outdoors === 'yes') {
+    stops.push(DB.hikes[(d-1) % DB.hikes.length]);
+  } else if (outdoors === 'mild') {
+    stops.push(DB.parks[(d-1) % DB.parks.length]);
+  } else {
+    stops.push(DB.neighborhoods[(d-1) % DB.neighborhoods.length]);
+  }
+
+  // AFTERNOON: neighborhood or attraction
+  if (d === 1) stops.push(DB.neighborhoods[0]); // Mission always day 1
+  else if (d === 2) stops.push(DB.attractions[who === 'family' ? 1 : 3]); // Exploratorium or City Lights
+  else if (d >= 3) stops.push(DB.neighborhoods[(d-1) % DB.neighborhoods.length]);
+
+  // DINNER
+  if (food === 'splurge' && d === Math.min(2, total)) {
+    stops.push(DB.food_splurge[0]); // House of Prime Rib
+  } else if (food === 'ethnic') {
+    stops.push(DB.food_cheap[(d-1) % DB.food_cheap.length]);
+  } else if (food === 'cheap' || !food) {
+    stops.push(DB.food_cheap[(d) % DB.food_cheap.length]);
+  } else {
+    stops.push(DB.food_splurge[(d-1) % DB.food_splurge.length]);
+  }
+
+  // EVENING / BAR
+  if (vibe === 'night') {
+    stops.push(DB.bars_cocktail[(d*2) % DB.bars_cocktail.length]);
+    stops.push(DB.bars_dive[(d*2+1) % DB.bars_dive.length]);
+  } else if (vibe === 'chill') {
+    stops.push(DB.bars_cocktail[4]); // Vesuvio - historic, chill
+  } else if (vibe === 'explore') {
+    stops.push(DB.bars_cocktail[(d-1) % DB.bars_cocktail.length]);
+  } else {
+    stops.push(DB.bars_dive[(d-1) % DB.bars_dive.length]);
+  }
+
+  // Render
+  let html = `<div class="day-block">
+    <div class="day-header">
+      <div class="day-num">0${d}</div>
+      <div class="day-info">
+        <div class="day-label">Day ${d}</div>
+        <div class="day-title">${title}</div>
+      </div>
+    </div>`;
+
+  let lastHood = null;
+  stops.forEach(stop => {
+    if (!stop) return;
+    if (stop.hood !== lastHood) {
+      lastHood = stop.hood;
+      html += `<div class="neighborhood-banner"><span class="nb-pin">📍</span><span class="nb-name">${stop.hood}</span></div>`;
+    }
+    html += renderStop(stop);
+  });
+
+  html += `</div>`;
+  return html;
+}
+
+function buildDayTripHTML(ans) {
+  const { redwoods, govShutdown } = ans;
+
+  // Always include a day trip section for 3+ days
+  // Redwoods logic: if requested, show Muir Woods (unless shutdown) or state park alternative
+  // If not requested or no preference, show Sausalito/Angel Island
+
+  let primaryTrip, shutdownNote = '', altNote = '';
+
+  if (redwoods === 'yes') {
+    if (govShutdown) {
+      primaryTrip = DB.daytrips[1]; // Armstrong Redwoods (state)
+      shutdownNote = "⚠️ Muir Woods (federal/NPS) is currently closed during the government shutdown. Armstrong Redwoods is a state park — same ancient trees, no federal drama, actually fewer crowds.";
+    } else {
+      primaryTrip = DB.daytrips[0]; // Muir Woods (federal)
+      shutdownNote = "Note: Muir Woods is a federal park (NPS). If there's ever a government shutdown, swap to Armstrong Redwoods or Samuel P. Taylor — same trees, both state parks.";
+    }
+  } else {
+    // Default to Sausalito if no redwood preference
+    primaryTrip = DB.daytrips[3]; // Sausalito
+  }
+
+  return `<div class="daytrip-block">
+    <div class="daytrip-inner">
+      <div class="daytrip-header">
+        <div class="day-num">+</div>
+        <div class="day-info">
+          <div class="daytrip-badge">${redwoods === 'yes' ? '🌲 Redwoods Day Trip' : '⛵ Day Trip Bonus'}</div>
+          <div class="day-title">Outside the City</div>
+        </div>
+      </div>
+      ${renderStop(primaryTrip)}
+      ${shutdownNote ? `<div class="shutdown-note">${shutdownNote}</div>` : ''}
+      <div class="daytrip-more">More options: Angel Island (state park ferry) · Sausalito (bike over, ferry back) · Point Reyes National Seashore · Napa Valley</div>
+    </div>
+  </div>`;
+}
+
+function renderStop(stop) {
+  if (!stop) return '';
+  return `<div class="stop-item">
+    <div class="stop-header">
+      <div class="stop-time-col">
+        <div class="stop-time">${stop.time}</div>
+        <div class="stop-dot"></div>
+      </div>
+      <div class="stop-content">
+        <div class="stop-tag">${stop.type}</div>
+        <div class="stop-name">${stop.name}</div>
+        <div class="stop-desc">${stop.desc}</div>
+        <div class="stop-sam-note">${stop.note}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════
+// MODAL + SEND
+// ════════════════════════════════════════
+function openSendModal() { updateMessagePreview(); document.getElementById('send-modal').classList.add('open'); }
+function closeModal(e) { if (e.target.id === 'send-modal') document.getElementById('send-modal').classList.remove('open'); }
+
+function updateMessagePreview() {
+  const name = (document.getElementById('sender-name')?.value||'').trim() || 'your friend';
+  const dates = (document.getElementById('sender-dates')?.value||'').trim() || 'some upcoming dates';
+  const vibeMap = { chill:'a slow chill trip', explore:'exploring the neighborhoods', eat:'eating everything in sight', night:'going out properly', null:'visiting' };
+  const vibeText = vibeMap[answers.vibe] || 'visiting';
+  const stayMap = {
+    twin: " (I'm claiming the twin air mattress in your living room 🙏)",
+    full: " (grabbing the full air mattress spot 🙏)",
+    hotel: " (staying in a hotel — will ask you for recs)",
+    airbnb: " (getting an Airbnb)",
+    other: " (staying with someone else in the city)"
+  };
+  const stayText = stayMap[answers.stay] || '';
+  const redwoodText = answers.redwoods==='yes' ? " I'm definitely doing the redwoods day." : '';
+
+  const msg = `Hey Sam! It's ${name}. Coming to SF ${dates} for ${vibeText}${stayText}. Used your guide to build my itinerary and I'm hyped.${redwoodText} Can't wait!`;
+  const ta = document.getElementById('message-preview');
+  if (ta) ta.value = msg;
+}
+
+function sendToSam() {
+  const msg = encodeURIComponent(document.getElementById('message-preview').value);
+  window.location.href = `sms:YOUR_PHONE_NUMBER&body=${msg}`;
+}
+
+function copyItinerary() {
+  const text = document.getElementById('itinerary-content').innerText;
+  navigator.clipboard.writeText("Sam's SF Itinerary\n\n" + text)
+    .then(() => alert('Copied!'))
+    .catch(() => alert('Copy failed — try selecting the text manually.'));
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('sender-name')?.addEventListener('input', updateMessagePreview);
+  document.getElementById('sender-dates')?.addEventListener('input', updateMessagePreview);
+});
+</script>
+</body>
+</html>
